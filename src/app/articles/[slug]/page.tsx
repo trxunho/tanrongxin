@@ -3,6 +3,13 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import Header from "@/components/header";
 import { articles, columns, entries } from "@/content/articles";
+
+const BASE = process.env.NEXT_PUBLIC_BASE_PATH ?? "";
+function withBase(html: string): string {
+  if (!BASE) return html;
+  // 把 HTML 正文里硬编码的 /articles/ 资源前缀补上子路径 basePath
+  return html.split("/articles/").join(`${BASE}/articles/`);
+}
 export const dynamicParams = false;
 export function generateStaticParams() { return articles.map(({ slug }) => ({ slug })); }
 export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }): Promise<Metadata> {
@@ -31,11 +38,11 @@ export default async function ArticlePage({ params }: { params: Promise<{ slug: 
         <div className="wrap reading-layout">
           <aside className="reading-aside"><span className="eyebrow">本栏篇目</span><h2>{column.title}</h2><nav aria-label={`${column.title}文章目录`}>{siblings.map((s, i) => <Link key={s.slug} href={`${s.href}#${s.kind === "3D 交互" ? "interactive" : "article-body"}`} aria-current={s.slug === slug ? "page" : undefined}><span>{String(i + 1).padStart(2, "0")}</span>{s.title}</Link>)}</nav></aside>
           <article className="reading-content">
-            {a.html && <div className="article-prose" dangerouslySetInnerHTML={{ __html: a.html }} />}
-            {a.media.length > 0 && <div className="article-gallery">{a.media.filter(m => m.kind === "video").map(m => <figure key={m.src}><video controls playsInline preload="metadata" aria-label={`${a.title}视频`}><source src={m.src} type="video/mp4" />您的浏览器不支持视频播放，<a href={m.src}>下载视频</a>。</video><figcaption>{a.title} · 动态演示</figcaption></figure>)}{a.media.filter(m => m.kind === "image").map((m, i) => <figure key={m.src}><a href={m.src} target="_blank" rel="noreferrer" aria-label={`查看原图：${m.alt}`}>
+            {a.html && <div className="article-prose" dangerouslySetInnerHTML={{ __html: withBase(a.html) }} />}
+            {a.media.length > 0 && <div className="article-gallery">{a.media.filter(m => m.kind === "video").map(m => <figure key={m.src}><video controls playsInline preload="metadata" aria-label={`${a.title}视频`}><source src={`${BASE}${m.src}`} type="video/mp4" />您的浏览器不支持视频播放，<a href={`${BASE}${m.src}`}>下载视频</a>。</video><figcaption>{a.title} · 动态演示</figcaption></figure>)}{a.media.filter(m => m.kind === "image").map((m, i) => <figure key={m.src}><a href={`${BASE}${m.src}`} target="_blank" rel="noreferrer" aria-label={`查看原图：${m.alt}`}>
               {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img src={m.src} alt={m.alt} loading="lazy" />
-            </a><figcaption><span>{String(i + 1).padStart(2, "0")} / {a.title}</span><a href={m.src} target="_blank" rel="noreferrer">查看原图 ↗</a></figcaption></figure>)}</div>}
+              <img src={`${BASE}${m.src}`} alt={m.alt} loading="lazy" />
+            </a><figcaption><span>{String(i + 1).padStart(2, "0")} / {a.title}</span><a href={`${BASE}${m.src}`} target="_blank" rel="noreferrer">查看原图 ↗</a></figcaption></figure>)}</div>}
             <div className="article-pagination">{previous ? <Link href={previous.href}><small>← 上一篇</small>{previous.title}</Link> : <Link href={`/#${column.id}`}><small>← 栏目首页</small>{column.title}</Link>}{next && <Link href={next.href}><small>下一篇 →</small>{next.title}</Link>}</div>
           </article>
         </div>

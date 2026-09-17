@@ -2,6 +2,8 @@ import Link from "next/link";
 import Header from "@/components/header";
 import BackToTop from "@/components/back-to-top";
 import { columns, entries, site } from "@/content/articles";
+
+const BASE = process.env.NEXT_PUBLIC_BASE_PATH ?? "";
 export default function Home() {
   const hero = site.hero;
   return (
@@ -102,7 +104,7 @@ export default function Home() {
           © {new Date().getFullYear()} {site.footer.main}
         </span>
         <span>{site.footer.right}</span>
-        <a href="/admin/">管理后台 ↗</a>
+        <a href={`${BASE}/admin/`}>管理后台 ↗</a>
       </footer>
       <BackToTop />
     </>

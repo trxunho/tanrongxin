@@ -4,6 +4,8 @@ import { notFound } from "next/navigation";
 import Header from "@/components/header";
 import { projects } from "@/content/portfolio";
 import { entries } from "@/content/articles";
+
+const BASE = process.env.NEXT_PUBLIC_BASE_PATH ?? "";
 export const dynamicParams = false;
 export function generateStaticParams() {
   return projects.map(({ slug }) => ({ slug }));
@@ -26,6 +28,9 @@ export default async function ProjectPage({
   const i = projects.findIndex((p) => p.slug === slug);
   if (i < 0) notFound();
   const p = projects[i];
+  // demoUrl 是 /robot-studio/... 之类的绝对路径，子路径部署时必须补 basePath，
+  // 否则 iframe 与新窗口打开都会 404（Next 只对 <Link> 自动加 basePath）。
+  const demoUrl = p.demoUrl ? `${BASE}${p.demoUrl}` : undefined;
   const visions = entries.filter(e => e.category === "visions");
   const columnIndex = visions.findIndex(e => e.slug === slug);
   const next = visions[(columnIndex + 1) % visions.length];
@@ -46,7 +51,7 @@ export default async function ProjectPage({
           {p.demoUrl && (
             <div className="demo-actions">
               <a className="button" href="#interactive">体验三维模型 <span aria-hidden="true">↓</span></a>
-              <a className="text-link" href={p.demoUrl} target="_blank" rel="noreferrer">独立窗口打开 ↗</a>
+              <a className="text-link" href={demoUrl} target="_blank" rel="noreferrer">独立窗口打开 ↗</a>
             </div>
           )}
         </section>
@@ -54,9 +59,9 @@ export default async function ProjectPage({
           <section className="demo-section wrap" id="interactive" aria-label={`${p.title}交互演示`}>
             <div className="demo-heading">
               <span className="eyebrow">INTERACTIVE / {p.demoLabel || "A4 ROBOT STUDIO"}</span>
-              <a href={p.demoUrl} target="_blank" rel="noreferrer">独立窗口 / 全屏体验 ↗</a>
+              <a href={demoUrl} target="_blank" rel="noreferrer">独立窗口 / 全屏体验 ↗</a>
             </div>
-            <iframe className="robot-demo" src={p.demoUrl} title={`${p.title}：可旋转、拆解和透视的三维模型`} allow="fullscreen" allowFullScreen loading="lazy" />
+            <iframe className="robot-demo" src={demoUrl} title={`${p.title}：可旋转、拆解和透视的三维模型`} allow="fullscreen" allowFullScreen loading="lazy" />
             <p className="demo-caption">{p.demoCaption || "拖动旋转，滚轮缩放；选择系统查看内部设备，或使用底部滑杆拆解模型。"}</p>
           </section>
         )}

@@ -28,6 +28,9 @@ type Status = { type: "ok" | "err" | "busy"; msg: string } | null;
 const API = "https://api.github.com";
 const CONTENT_DIR = "src/content";
 
+// 子路径部署下的资源前缀；数据驱动的资源 URL（如 /articles/...）需手动补上
+const BASE = process.env.NEXT_PUBLIC_BASE_PATH ?? "";
+
 function utf8ToBase64(str: string): string {
   const bytes = new TextEncoder().encode(str);
   let bin = "";
@@ -65,7 +68,7 @@ function sanitizeName(name: string): string {
 }
 
 export default function AdminPage() {
-  const [auth, setAuth] = useState<Auth>({ token: "", owner: "trxunho", repo: "robotics-portfolio-public", branch: "main" });
+  const [auth, setAuth] = useState<Auth>({ token: "", owner: "trxunho", repo: "tanrongxin", branch: "main" });
   const [phase, setPhase] = useState<"login" | "app">("login");
   const [busy, setBusy] = useState(false);
   const [status, setStatus] = useState<Status>(null);
@@ -138,7 +141,7 @@ export default function AdminPage() {
       }
       if (!repoInfo?.permissions?.push) {
         throw new Error(
-          "该令牌没有此仓库的写入权限，无法保存。解决：① 经典 PAT 勾选 repo（公开仓库也可用 public_repo）作用域；② 精细化令牌(fine-grained)需在 trxunho/robotics-portfolio-public 授予 Contents: Read and write。当前令牌仅能读取。"
+          "该令牌没有此仓库的写入权限，无法保存。解决：① 经典 PAT 勾选 repo（公开仓库也可用 public_repo）作用域；② 精细化令牌(fine-grained)需在 trxunho/tanrongxin 授予 Contents: Read and write。当前令牌仅能读取。"
         );
       }
       const a = await gh<any>(`/repos/${auth.owner}/${auth.repo}/contents/${CONTENT_DIR}/articles.json`);
@@ -151,7 +154,7 @@ export default function AdminPage() {
     } catch (e: any) {
       const m = e?.message || String(e);
       if (/Resource not accessible|not accessible by personal access token/i.test(m)) {
-        setStatus({ type: "err", msg: "连接失败：令牌无权访问该仓库。请使用具备 repo（或 public_repo）作用域的 PAT；若用精细化令牌，需在 trxunho/robotics-portfolio-public 授予 Contents: Read and write。" });
+        setStatus({ type: "err", msg: "连接失败：令牌无权访问该仓库。请使用具备 repo（或 public_repo）作用域的 PAT；若用精细化令牌，需在 trxunho/tanrongxin 授予 Contents: Read and write。" });
       } else {
         setStatus({ type: "err", msg: "连接失败：" + m });
       }
@@ -315,7 +318,7 @@ export default function AdminPage() {
     } catch (e: any) {
       const m = e?.message || String(e);
       if (/Resource not accessible|not accessible by personal access token/i.test(m)) {
-        setStatus({ type: "err", msg: "保存失败：你的 PAT 没有写入权限，无法提交。请改用具备 repo（或 public_repo）作用域的令牌；若用精细化令牌(fine-grained)，需在 trxunho/robotics-portfolio-public 授予 Contents: Read and write。" });
+        setStatus({ type: "err", msg: "保存失败：你的 PAT 没有写入权限，无法提交。请改用具备 repo（或 public_repo）作用域的令牌；若用精细化令牌(fine-grained)，需在 trxunho/tanrongxin 授予 Contents: Read and write。" });
       } else {
         setStatus({ type: "err", msg: "保存失败：" + m });
       }
@@ -410,11 +413,8 @@ export default function AdminPage() {
               <p style={{ margin: "6px 0" }}>
                 <strong>① trxunho.github.io（GitHub Pages）</strong>：保存后由 GitHub Actions 自动构建并部署，通常 <strong>1–2 分钟</strong> 即可上线，无需等待定时任务。
               </p>
-              <p style={{ margin: "6px 0" }}>
-                <strong>② tanrongxin-cms.app.workbuddy.host（WorkBuddy）</strong>：由部署同步任务更新。如需立即生效，可在 WorkBuddy 的「自动化」面板找到「同步作品集站点」任务，点击 <strong>运行</strong> 手动触发（也默认每小时自动同步一次）。
-              </p>
               <p className={styles.muted} style={{ margin: "6px 0 0" }}>
-                注：GitHub Pages 自动部署需要在仓库 <code>robotics-portfolio-public</code> 的 Settings → Secrets 中配置一个名为 <code>PAGES_DEPLOY_TOKEN</code> 的令牌（即你登录后台所用的同一枚 <code>repo</code> 令牌即可）。
+                本站点是一个独立的 GitHub Pages 项目仓库 <code>trxunho/tanrongxin</code>，与原有作品集站点互不干扰，可各自维护不同内容。
               </p>
             </div>
           </details>
@@ -643,10 +643,10 @@ function ArticleEditor({
             <div className={styles.mediaItem} key={m.src + i}>
               <span className={styles.badge}>{m.kind === "video" ? "视频" : "图片"}</span>
               {m.kind === "video" ? (
-                <video src={m.src} muted controls preload="metadata" />
+                <video src={`${BASE}${m.src}`} muted controls preload="metadata" />
               ) : (
                 // eslint-disable-next-line @next/next/no-img-element
-                <img src={m.src} alt={m.alt || ""} />
+                <img src={`${BASE}${m.src}`} alt={m.alt || ""} />
               )}
               <div className={styles.meta}>{m.alt || m.src.split("/").pop()}</div>
               <button className={styles.remove} onClick={() => onRemoveCommitted(i)}>
